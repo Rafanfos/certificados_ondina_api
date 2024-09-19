@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from datetime import timedelta
 import os
 from pathlib import Path
+from re import I
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,6 +49,7 @@ THIRD_PARTY_APPS = [
 
 MY_APPS = [
     "users",
+    "students",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + MY_APPS
@@ -138,6 +140,13 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
 }
 
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
