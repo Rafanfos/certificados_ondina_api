@@ -127,6 +127,10 @@ def highlight_pdf(request):
 
         # Criar ou atualizar o certificado
         HighlightCertificate.objects.update_or_create(student=student)
+        
+        # Atualizar a propriedade highlight_certificate_generated
+        student.highlight_certificate_generated = True
+        student.save()
 
         return response
     except Student.DoesNotExist:
