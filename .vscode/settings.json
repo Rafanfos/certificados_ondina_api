@@ -5,6 +5,7 @@
     "pdfbase",
     "pdfgen",
     "pdfmetrics",
+    "postgresql",
     "simplejwt",
     "ttfonts"
   ]

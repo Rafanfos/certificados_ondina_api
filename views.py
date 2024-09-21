@@ -10,16 +10,14 @@ from rest_framework.decorators import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from .students.models import Student
 from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from django.utils import timezone
-
+from .students.models import Student, HighlightCertificate
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
-from students.models import HighlightCertificate, Student
-
 
 @csrf_exempt
 @api_view(["POST"])
@@ -154,7 +152,6 @@ def highlight_pdf(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
-
 @api_view(["GET"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -176,3 +173,5 @@ def get_all_students(request):
 
     # Retornar os dados em formato JSON
     return JsonResponse({"students": students_data}, status=200, safe=False)
+
+
