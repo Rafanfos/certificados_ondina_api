@@ -74,7 +74,7 @@ def generate_pdf(request):
     certificate_type = data.get("certificate_type")
 
     try:
-        if(certificate_type != "highlight_certificate" | certificate_type != "diploma"):
+        if certificate_type != "highlight_certificate" | certificate_type != "diploma":
             return JsonResponse({"error": "Invalid certificate type"}, status=400)
 
         student = Student.objects.get(id=student_id)
@@ -174,7 +174,6 @@ def generate_pdf(request):
                     "vice_director_name": vice_director,
                 },
             )
-        
 
             student.diploma_generated = True
             student.save()
@@ -189,11 +188,10 @@ def generate_pdf(request):
 @api_view(["GET"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def get_all_students(request):
-    # Buscar todos os estudantes
+def get_all_students():
+
     students = Student.objects.all()
 
-    # Transformar os dados em uma lista de dicionários
     students_data = [
         {
             "id": student.id,
@@ -205,5 +203,4 @@ def get_all_students(request):
         for student in students
     ]
 
-    # Retornar os dados em formato JSON
     return JsonResponse({"students": students_data}, status=200, safe=False)
