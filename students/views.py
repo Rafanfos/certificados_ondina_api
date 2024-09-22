@@ -18,11 +18,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from students.models import Diploma, HighlightCertificate, Student
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-
 @csrf_exempt
 @api_view(["POST"])
 @authentication_classes([JWTAuthentication])
@@ -30,19 +25,17 @@ logger = logging.getLogger(__name__)
 def register_students(request):
     if request.method == "POST":
         try:
-            # Obtenha o conteúdo do arquivo CSV enviado como string
-            csv_content = request.data["file"]
+            # Obtenha o arquivo CSV enviado
+            csv_file = request.FILES["file"]
 
-            # Use StringIO para tratar o conteúdo da string como se fosse um arquivo
-            io_string = StringIO(csv_content)
-            reader = csv.DictReader(
-                io_string, delimiter=","
-            )  # Delimitador padrão é ','
+            # Leia o conteúdo do arquivo CSV
+            io_string = csv_file.read().decode('utf-8')
+            reader = csv.DictReader(io_string.splitlines(), delimiter=",")  # Use splitlines para dividir em linhas
 
             # Itere sobre as linhas do CSV e crie os registros no banco de dados
             for row in reader:
-                full_name = row["nome completo"]
-                graduation_term = row["trimestre"]
+                full_name = row["Nome Completo"]  # Verifique se o cabeçalho está correto
+                graduation_term = row["Trimestre"]
 
                 # Crie o registro no banco de dados
                 Student.objects.create(
@@ -60,6 +53,7 @@ def register_students(request):
 
     # Método não permitido se não for POST
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 
 @api_view(["POST"])
