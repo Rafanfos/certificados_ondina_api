@@ -74,7 +74,7 @@ def generate_pdf(request):
     certificate_type = data.get("certificate_type")
 
     try:
-        if certificate_type != "highlight_certificate" | certificate_type != "diploma":
+        if certificate_type != "highlight_certificate" and certificate_type != "diploma":
             return JsonResponse({"error": "Invalid certificate type"}, status=400)
 
         student = Student.objects.get(id=student_id)
@@ -188,7 +188,7 @@ def generate_pdf(request):
 @api_view(["GET"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def get_all_students():
+def get_all_students(request):
 
     students = Student.objects.all()
 
