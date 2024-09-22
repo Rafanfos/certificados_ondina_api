@@ -7,8 +7,6 @@ from .models import User
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import UserSerializer
 from .permissions import IsAccountOwner, IsSuperuser
-from rest_framework_simplejwt.views import TokenObtainPairView
-
 
 class UserView(CreateAPIView):
     queryset = User.objects.all()

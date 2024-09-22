@@ -1,3 +1,13 @@
 {
-  "cSpell.words": ["ondina", "simplejwt"]
+  "cSpell.words": [
+    "corsheaders",
+    "ondina",
+    "pagesizes",
+    "pdfbase",
+    "pdfgen",
+    "pdfmetrics",
+    "postgresql",
+    "simplejwt",
+    "ttfonts"
+  ]
 }
