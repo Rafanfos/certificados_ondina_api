@@ -18,6 +18,10 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from students.models import Diploma, HighlightCertificate, Student
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 @csrf_exempt
 @api_view(["POST"])
@@ -70,6 +74,9 @@ def generate_pdf(request):
     certificate_type = data.get("certificate_type")
 
     try:
+        if(certificate_type != "highlight_certificate" | certificate_type != "diploma"):
+            return JsonResponse({"error": "Invalid certificate type"}, status=400)
+
         student = Student.objects.get(id=student_id)
         full_name = student.full_name
         graduation_term = student.graduation_term
@@ -149,14 +156,25 @@ def generate_pdf(request):
         p.save()
 
         if certificate_type == "highlight_certificate":
-            # Criar ou atualizar o certificado
-            HighlightCertificate.objects.update_or_create(student=student)
+            HighlightCertificate.objects.update_or_create(
+                student=student,
+                defaults={
+                    "director_name": director,
+                    "vice_director_name": vice_director,
+                },
+            )
 
-            # Atualizar a propriedade highlight_certificate_generated
             student.highlight_certificate_generated = True
             student.save()
         elif certificate_type == "diploma":
-            Diploma.objects.update_or_create(student=student)
+            Diploma.objects.update_or_create(
+                student=student,
+                defaults={
+                    "director_name": director,
+                    "vice_director_name": vice_director,
+                },
+            )
+        
 
             student.diploma_generated = True
             student.save()
