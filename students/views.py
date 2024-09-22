@@ -14,11 +14,9 @@ from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from django.utils import timezone
-
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
-from students.models import HighlightCertificate, Student
+from students.models import Diploma, HighlightCertificate, Student
 
 
 @csrf_exempt
@@ -63,17 +61,18 @@ def register_students(request):
 @api_view(["POST"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def highlight_pdf(request):
+def generate_pdf(request):
     data = request.data
     director = data.get("director")
     vice_director = data.get("vice_director")
-    student_id = data.get("student_id")  # ID do aluno em destaque
+    year = data.get("year")
+    student_id = data.get("student_id")
+    certificate_type = data.get("certificate_type")
 
     try:
         student = Student.objects.get(id=student_id)
         full_name = student.full_name
         graduation_term = student.graduation_term
-        current_year = timezone.now().year
 
         # Criar o PDF
         response = HttpResponse(content_type="application/pdf")
@@ -85,10 +84,18 @@ def highlight_pdf(request):
         p = canvas.Canvas(response, pagesize=landscape(letter))
         width, height = landscape(letter)
 
+        image_path = ""
+
         # Adicionar imagem de fundo
-        image_path = os.path.join(
-            settings.BASE_DIR, "static", "images", "highlight-model.png"
-        )
+        if certificate_type == "highlight_certificate":
+            image_path = os.path.join(
+                settings.BASE_DIR, "static", "images", "highlight-model.png"
+            )
+        elif certificate_type == "diploma":
+            image_path = os.path.join(
+                settings.BASE_DIR, "static", "images", "diploma-model.png"
+            )
+
         p.drawImage(image_path, 0, 0, width=width, height=height)
 
         # Adicionar uma fonte personalizada
@@ -135,18 +142,24 @@ def highlight_pdf(request):
         p.drawCentredString(
             width / 2,
             height - 600,
-            f"Belo Horizonte, {graduation_term}º Trimestre/{current_year}",
+            f"Belo Horizonte, {graduation_term}º Trimestre/{year}",
         )
 
         p.showPage()
         p.save()
 
-        # Criar ou atualizar o certificado
-        HighlightCertificate.objects.update_or_create(student=student)
+        if certificate_type == "highlight_certificate":
+            # Criar ou atualizar o certificado
+            HighlightCertificate.objects.update_or_create(student=student)
 
-        # Atualizar a propriedade highlight_certificate_generated
-        student.highlight_certificate_generated = True
-        student.save()
+            # Atualizar a propriedade highlight_certificate_generated
+            student.highlight_certificate_generated = True
+            student.save()
+        elif certificate_type == "diploma":
+            Diploma.objects.update_or_create(student=student)
+
+            student.diploma_generated = True
+            student.save()
 
         return response
     except Student.DoesNotExist:
