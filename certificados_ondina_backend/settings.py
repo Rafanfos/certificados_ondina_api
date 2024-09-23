@@ -71,7 +71,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://seu-dominio.com",
+    "https://18.230.150.250:3031",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
