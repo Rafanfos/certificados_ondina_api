@@ -1,0 +1,11 @@
+services:
+  api_certificados:
+    build: 
+      dockerfile: Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "3030:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app

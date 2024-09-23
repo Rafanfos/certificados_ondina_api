@@ -26,8 +26,5 @@ COPY . /app/
 # Expor a porta 8000 para o contêiner
 EXPOSE 8000
 
-# Instalar o Gunicorn
-RUN pip install gunicorn
-
-# Define o comando para iniciar o servidor Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "certificados_ondina_backend.wsgi:application"]
+# Define o comando para iniciar o servidor Django
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
