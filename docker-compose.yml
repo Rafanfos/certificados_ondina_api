@@ -14,7 +14,7 @@ services:
   certificados_db:
     image: postgres:15-alpine
     ports:
-      - 3031:5432
+      - 3031:${DB_PORT}
     env_file:
       - .env
     volumes:
