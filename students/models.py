@@ -10,7 +10,7 @@ class Student(models.Model):
     highlight_certificate_generated = models.BooleanField(default=False)
 
 
-class HighlightCertificate(models.Model):
+class Highlight_Certificate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="highlight_certificates"
