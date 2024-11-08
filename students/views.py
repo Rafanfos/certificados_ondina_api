@@ -14,12 +14,9 @@ from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from django.utils import timezone
-
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
-from students.models import HighlightCertificate, Student
-
+from students.models import Diploma, HighlightCertificate, Student
 
 @csrf_exempt
 @api_view(["POST"])
@@ -28,19 +25,17 @@ from students.models import HighlightCertificate, Student
 def register_students(request):
     if request.method == "POST":
         try:
-            # Obtenha o conteúdo do arquivo CSV enviado como string
-            csv_content = request.data["file"]
+            # Obtenha o arquivo CSV enviado
+            csv_file = request.FILES["file"]
 
-            # Use StringIO para tratar o conteúdo da string como se fosse um arquivo
-            io_string = StringIO(csv_content)
-            reader = csv.DictReader(
-                io_string, delimiter=","
-            )  # Delimitador padrão é ','
+            # Leia o conteúdo do arquivo CSV
+            io_string = csv_file.read().decode('utf-8')
+            reader = csv.DictReader(io_string.splitlines(), delimiter=",")  # Use splitlines para dividir em linhas
 
             # Itere sobre as linhas do CSV e crie os registros no banco de dados
             for row in reader:
-                full_name = row["nome completo"]
-                graduation_term = row["trimestre"]
+                full_name = row["Nome Completo"]  # Verifique se o cabeçalho está correto
+                graduation_term = row["Trimestre"]
 
                 # Crie o registro no banco de dados
                 Student.objects.create(
@@ -60,20 +55,25 @@ def register_students(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
+
 @api_view(["POST"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def highlight_pdf(request):
+def generate_pdf(request):
     data = request.data
     director = data.get("director")
     vice_director = data.get("vice_director")
-    student_id = data.get("student_id")  # ID do aluno em destaque
+    year = data.get("year")
+    student_id = data.get("student_id")
+    certificate_type = data.get("certificate_type")
 
     try:
+        if certificate_type != "highlight_certificate" and certificate_type != "diploma":
+            return JsonResponse({"error": "Invalid certificate type"}, status=400)
+
         student = Student.objects.get(id=student_id)
         full_name = student.full_name
         graduation_term = student.graduation_term
-        current_year = timezone.now().year
 
         # Criar o PDF
         response = HttpResponse(content_type="application/pdf")
@@ -85,10 +85,18 @@ def highlight_pdf(request):
         p = canvas.Canvas(response, pagesize=landscape(letter))
         width, height = landscape(letter)
 
+        image_path = ""
+
         # Adicionar imagem de fundo
-        image_path = os.path.join(
-            settings.BASE_DIR, "static", "images", "highlight-model.png"
-        )
+        if certificate_type == "highlight_certificate":
+            image_path = os.path.join(
+                settings.BASE_DIR, "static", "images", "highlight-model.png"
+            )
+        elif certificate_type == "diploma":
+            image_path = os.path.join(
+                settings.BASE_DIR, "static", "images", "diploma-model.png"
+            )
+
         p.drawImage(image_path, 0, 0, width=width, height=height)
 
         # Adicionar uma fonte personalizada
@@ -98,15 +106,17 @@ def highlight_pdf(request):
         pdfmetrics.registerFont(TTFont("GreatVibes", font_path))
         p.setFont("GreatVibes", 40)
 
+        students_name_y = certificate_type == "highlight_certificate" and 370 or 300
+
         # Adicionar conteúdo ao PDF
-        p.drawCentredString(width / 2, height - 370, f"{full_name}")
+        p.drawCentredString(width / 2, height - students_name_y, f"{full_name}")
 
         # Desenhar caixas e adicionar texto
         box_width = 200
         box_height = 20
-        box_x_start = 90
-        box_y = height - 530
-
+        box_x_start = certificate_type == "highlight_certificate" and 90 or 300
+        box_y = certificate_type == "highlight_certificate" and height - 530 or height - 500
+        
         # Caixa para o diretor
         font_path = os.path.join(
             settings.BASE_DIR, "static", "fonts", "CormorantGaramond-Medium.ttf"
@@ -119,34 +129,51 @@ def highlight_pdf(request):
             box_x_start + box_width / 2, box_y + box_height / 2, director
         )
 
-        # Caixa para o vice-diretor
-        box_x_start = 510
-        p.rect(box_x_start, box_y, box_width, box_height)
-        p.drawCentredString(
-            box_x_start + box_width / 2, box_y + box_height / 2, vice_director
-        )
+        if(certificate_type == "highlight_certificate"):
+            # Caixa para o vice-diretor
+            box_x_start = 510
+            p.rect(box_x_start, box_y, box_width, box_height)
+            p.drawCentredString(
+                box_x_start + box_width / 2, box_y + box_height / 2, vice_director
+            )
 
-        # Data e local
-        font_path = os.path.join(
-            settings.BASE_DIR, "static", "fonts", "Alice-Regular.ttf"
-        )
-        pdfmetrics.registerFont(TTFont("Alice", font_path))
-        p.setFont("Alice", 17)
-        p.drawCentredString(
-            width / 2,
-            height - 600,
-            f"Belo Horizonte, {graduation_term}º Trimestre/{current_year}",
-        )
+            # Data e local
+            font_path = os.path.join(
+                settings.BASE_DIR, "static", "fonts", "Alice-Regular.ttf"
+            )
+            pdfmetrics.registerFont(TTFont("Alice", font_path))
+            p.setFont("Alice", 17)
+            p.drawCentredString(
+                width / 2,
+                height - 600,
+                f"Belo Horizonte, {graduation_term}º Trimestre/{year}",
+            )
 
         p.showPage()
         p.save()
 
-        # Criar ou atualizar o certificado
-        HighlightCertificate.objects.update_or_create(student=student)
+        if certificate_type == "highlight_certificate":
+            HighlightCertificate.objects.update_or_create(
+                student=student,
+                defaults={
+                    "director_name": director,
+                    "vice_director_name": vice_director,
+                },
+            )
 
-        # Atualizar a propriedade highlight_certificate_generated
-        student.highlight_certificate_generated = True
-        student.save()
+            student.highlight_certificate_generated = True
+            student.save()
+        elif certificate_type == "diploma":
+            Diploma.objects.update_or_create(
+                student=student,
+                defaults={
+                    "director_name": director,
+                    "vice_director_name": vice_director,
+                },
+            )
+
+            student.diploma_generated = True
+            student.save()
 
         return response
     except Student.DoesNotExist:
@@ -159,10 +186,9 @@ def highlight_pdf(request):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def get_all_students(request):
-    # Buscar todos os estudantes
+
     students = Student.objects.all()
 
-    # Transformar os dados em uma lista de dicionários
     students_data = [
         {
             "id": student.id,
@@ -174,5 +200,4 @@ def get_all_students(request):
         for student in students
     ]
 
-    # Retornar os dados em formato JSON
     return JsonResponse({"students": students_data}, status=200, safe=False)
