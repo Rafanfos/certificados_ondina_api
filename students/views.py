@@ -16,7 +16,7 @@ from reportlab.pdfgen import canvas
 from django.utils import timezone
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from students.models import Diploma, HighlightCertificate, Student
+from students.models import Diploma, Highlight_Certificate, Student
 
 @csrf_exempt
 @api_view(["POST"])
@@ -153,7 +153,7 @@ def generate_pdf(request):
         p.save()
 
         if certificate_type == "highlight_certificate":
-            HighlightCertificate.objects.update_or_create(
+            Highlight_Certificate.objects.update_or_create(
                 student=student,
                 defaults={
                     "director_name": director,
