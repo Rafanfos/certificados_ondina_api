@@ -106,15 +106,17 @@ def generate_pdf(request):
         pdfmetrics.registerFont(TTFont("GreatVibes", font_path))
         p.setFont("GreatVibes", 40)
 
+        students_name_y = certificate_type == "highlight_certificate" and 370 or 300
+
         # Adicionar conteúdo ao PDF
-        p.drawCentredString(width / 2, height - 370, f"{full_name}")
+        p.drawCentredString(width / 2, height - students_name_y, f"{full_name}")
 
         # Desenhar caixas e adicionar texto
         box_width = 200
         box_height = 20
-        box_x_start = 90
-        box_y = height - 530
-
+        box_x_start = certificate_type == "highlight_certificate" and 90 or 300
+        box_y = certificate_type == "highlight_certificate" and height - 530 or height - 500
+        
         # Caixa para o diretor
         font_path = os.path.join(
             settings.BASE_DIR, "static", "fonts", "CormorantGaramond-Medium.ttf"
@@ -127,24 +129,25 @@ def generate_pdf(request):
             box_x_start + box_width / 2, box_y + box_height / 2, director
         )
 
-        # Caixa para o vice-diretor
-        box_x_start = 510
-        p.rect(box_x_start, box_y, box_width, box_height)
-        p.drawCentredString(
-            box_x_start + box_width / 2, box_y + box_height / 2, vice_director
-        )
+        if(certificate_type == "highlight_certificate"):
+            # Caixa para o vice-diretor
+            box_x_start = 510
+            p.rect(box_x_start, box_y, box_width, box_height)
+            p.drawCentredString(
+                box_x_start + box_width / 2, box_y + box_height / 2, vice_director
+            )
 
-        # Data e local
-        font_path = os.path.join(
-            settings.BASE_DIR, "static", "fonts", "Alice-Regular.ttf"
-        )
-        pdfmetrics.registerFont(TTFont("Alice", font_path))
-        p.setFont("Alice", 17)
-        p.drawCentredString(
-            width / 2,
-            height - 600,
-            f"Belo Horizonte, {graduation_term}º Trimestre/{year}",
-        )
+            # Data e local
+            font_path = os.path.join(
+                settings.BASE_DIR, "static", "fonts", "Alice-Regular.ttf"
+            )
+            pdfmetrics.registerFont(TTFont("Alice", font_path))
+            p.setFont("Alice", 17)
+            p.drawCentredString(
+                width / 2,
+                height - 600,
+                f"Belo Horizonte, {graduation_term}º Trimestre/{year}",
+            )
 
         p.showPage()
         p.save()
