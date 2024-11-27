@@ -71,7 +71,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://18.230.150.250:3031",
+    "https://certificados-ondina-app.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
