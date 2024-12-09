@@ -17,6 +17,8 @@ from django.utils import timezone
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from students.models import Diploma, Highlight_Certificate, Student
+from reportlab.pdfbase.pdfmetrics import stringWidth
+
 
 @csrf_exempt
 @api_view(["POST"])
@@ -29,12 +31,16 @@ def register_students(request):
             csv_file = request.FILES["file"]
 
             # Leia o conteúdo do arquivo CSV
-            io_string = csv_file.read().decode('utf-8')
-            reader = csv.DictReader(io_string.splitlines(), delimiter=",")  # Use splitlines para dividir em linhas
+            io_string = csv_file.read().decode("utf-8")
+            reader = csv.DictReader(
+                io_string.splitlines(), delimiter=","
+            )  # Use splitlines para dividir em linhas
 
             # Itere sobre as linhas do CSV e crie os registros no banco de dados
             for row in reader:
-                full_name = row["Nome Completo"]  # Verifique se o cabeçalho está correto
+                full_name = row[
+                    "Nome Completo"
+                ]  # Verifique se o cabeçalho está correto
                 graduation_term = row["Trimestre"]
 
                 # Crie o registro no banco de dados
@@ -55,7 +61,6 @@ def register_students(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-
 @api_view(["POST"])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -68,7 +73,10 @@ def generate_pdf(request):
     certificate_type = data.get("certificate_type")
 
     try:
-        if certificate_type != "highlight_certificate" and certificate_type != "diploma":
+        if (
+            certificate_type != "highlight_certificate"
+            and certificate_type != "diploma"
+        ):
             return JsonResponse({"error": "Invalid certificate type"}, status=400)
 
         student = Student.objects.get(id=student_id)
@@ -104,23 +112,39 @@ def generate_pdf(request):
             settings.BASE_DIR, "static", "fonts", "GreatVibes-Regular.ttf"
         )
         pdfmetrics.registerFont(TTFont("GreatVibes", font_path))
-        p.setFont("GreatVibes", 40)
 
-        students_name_y = certificate_type == "highlight_certificate" and 370 or 300
+        font_size = 40
+        p.setFont("GreatVibes", font_size)
+        max_width = 600
+        students_name_y = certificate_type == "highlight_certificate" and 370 or 240
+
+        text_width = stringWidth(full_name, "GreatVibes", font_size)
+        if text_width > max_width:
+            # Divida o texto em várias linhas
+            lines = split_text_into_lines(full_name, "GreatVibes", font_size, max_width)
+            y_offset = students_name_y + (len(lines) - 1) * font_size
+            for line in lines:
+                p.drawCentredString(width / 2, height - y_offset, line)
+                y_offset += font_size
+        else:
+            p.drawCentredString(width / 2, height - students_name_y, full_name)
 
         # Adicionar conteúdo ao PDF
-        p.drawCentredString(width / 2, height - students_name_y, f"{full_name}")
+        # p.drawCentredString(width / 2, height - students_name_y, f"{full_name}")
 
         # Desenhar caixas e adicionar texto
         box_width = 200
         box_height = 20
         box_x_start = certificate_type == "highlight_certificate" and 90 or 300
-        box_y = certificate_type == "highlight_certificate" and height - 530 or height - 500
-        
+        box_y = (
+            certificate_type == "highlight_certificate" and height - 530 or height - 500
+        )
+
         # Caixa para o diretor
         font_path = os.path.join(
             settings.BASE_DIR, "static", "fonts", "CormorantGaramond-Medium.ttf"
         )
+
         pdfmetrics.registerFont(TTFont("CormorantGaramond-Medium", font_path))
         p.setFont("CormorantGaramond-Medium", 16)
         p.setStrokeColor("transparent")
@@ -129,7 +153,7 @@ def generate_pdf(request):
             box_x_start + box_width / 2, box_y + box_height / 2, director
         )
 
-        if(certificate_type == "highlight_certificate"):
+        if certificate_type == "highlight_certificate":
             # Caixa para o vice-diretor
             box_x_start = 510
             p.rect(box_x_start, box_y, box_width, box_height)
@@ -168,7 +192,6 @@ def generate_pdf(request):
                 student=student,
                 defaults={
                     "director_name": director,
-                    "vice_director_name": vice_director,
                 },
             )
 
@@ -201,3 +224,23 @@ def get_all_students(request):
     ]
 
     return JsonResponse({"students": students_data}, status=200, safe=False)
+
+
+def split_text_into_lines(text, font_name, font_size, max_width):
+    """Quebra o texto em linhas para caber dentro da largura máxima."""
+    words = text.split()
+    lines = []
+    current_line = ""
+
+    for word in words:
+        # Verifique a largura da linha atual com a próxima palavra
+        test_line = f"{current_line} {word}".strip()
+        if stringWidth(test_line, font_name, font_size) <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+
+    return lines

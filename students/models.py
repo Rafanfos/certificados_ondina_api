@@ -34,7 +34,6 @@ class Diploma(models.Model):
     director_name = models.CharField(
         max_length=255,
     )
-    vice_director_name = models.CharField(max_length=25)
 
     def __str__(self):
         return f"Diploma for {self.student.full_name} - {self.generated_at}"
