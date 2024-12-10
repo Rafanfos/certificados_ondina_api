@@ -157,7 +157,7 @@ O servidor estará disponível em <http://localhost:3030>.
     Use a rota de login para autenticar com o superusuário:
 
     ```bash
-    POST http://localhost:8000/api/users/login
+    POST /api/users/login
     ```
 
 3. A requisição deve enviar as credenciais do superusuário no corpo (em formato JSON) que pode ser feita utilizando Insonmia ou Postman:
@@ -174,7 +174,203 @@ O servidor estará disponível em <http://localhost:3030>.
     Após estar autenticado como superusuário, use a rota para registrar novos usuários:
 
     ```bash
-    POST http://localhost:8000/api/users/register
+    POST /api/users/register
     ```
 
 Certifique-se de enviar as credenciais de autenticação do superusuário no cabeçalho da requisição.
+
+## Endpoints
+
+### 1. **Registro de Usuário**
+
+Essa rota cria um usuário no banco de dados da aplicação.
+
+- **Método:** `POST`
+- **Rota:** `/api/users/register`
+
+- **Body da Requisição**
+
+    ```json
+    {
+        "username": "seu_usuario",
+        "email": "seu_email@mail.com",
+        "first_name": "Seu Nome",
+        "last_name": "Seu Sobrenome",
+        "password": "sua_senha"
+    }
+    ```
+
+- **Resposta**
+
+    ```json
+    {
+        "id": "cc31e951-8b86-4546-bc6c-1b6909fe9e45",
+        "username": "diretoria_ondina",
+        "email": "diretoria_ondina@mail.com",
+        "first_name": "Diretoria",
+        "last_name": "Ondina",
+        "is_superuser": false
+    }
+    ```
+
+### 2. Login do usuário
+
+Esta rota autentica um usuário já cadastro no sistema.
+
+- **Método:** `POST`
+- **Rota:** `/api/users/login`
+
+- **Body da Requisição**
+
+    ```json
+    {
+        "username": "seu_usuario",
+        "password": "sua_senha"
+    }
+    ```
+
+- **Resposta**
+
+    ```json
+    {
+        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczNDQ1MDY3NCwiaWF0IjoxNzMzODQ1ODc0LCJqdGkiOiJkYzQxOTUwZjgwMDM0MWRjOWFiOWQwNWFkZGI1ZmM1MiIsInVzZXJfaWQiOiJjYzMxZTk1MS04Yjg2LTQ1NDYtYmM2Yy0xYjY5MDlmZTllNDUifQ.WqyJMx8uMeWoGpXM1giUibLgIMrNeVddH0kTd7tpV0k",
+        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMzODk5ODc0LCJpYXQiOjE3MzM4NDU4NzQsImp0aSI6IjE3ZmNlNDQ4NWRhOTRmNDU5ZjBiNWQzZmExN2Y1MzMyIiwidXNlcl9pZCI6ImNjMzFlOTUxLThiODYtNDU0Ni1iYzZjLTFiNjkwOWZlOWU0NSJ9.aTCK9vDfZzWiAavjkpdlJWLE8mgd6tHQgXE4mPsn03U"
+    }
+    ```
+
+### 3. Listar Alunos
+
+Esta rota lista todos os alunos com suas informações de nome trimestre, e se foram gerados seus certificados de destaque e/ou diplomas.
+
+- **Método:** `GET`
+- **Rota:** `/api/students/list`
+- **Autenticação:** O Bearer token deve ser enviado no cabeçalho da requisição
+
+    ```makefile
+    Authorization: Bearer <seu_token_aqui>
+    ```
+
+- **Resposta**
+
+    ```json
+    {
+        "students": [
+            {
+                "id": "ff89acf7-d775-4459-9696-024676df13a1",
+                "full_name": "LUANA RIBEIRO LOPES",
+                "graduation_term": "3",
+                "diploma_generated": true,
+                "highlight_certificate_generated": false
+            },
+            {
+                "id": "0dc1aea8-0cdf-4647-8831-caa7c67c8819",
+                "full_name": "JOAO PEDRO OLIVEIRA SANTOS DA SILVA",
+                "graduation_term": "3",
+                "diploma_generated": true,
+                "highlight_certificate_generated": false
+            }
+        ]
+    }
+    ```
+
+### 4. **Registro de Alunos**
+
+Essa rota permite o registro de alunos por meio do upload de um arquivo CSV com os dados dos alunos.
+
+- **Método:** `POST`
+- **Rota:** `/api/students/register`
+- **Body de requisição:**
+
+    ```csv
+    nome completo,trimestre
+    João Silva,1
+    Maria Souza,2
+    Pedro Oliveira,3
+    ```
+
+- **Resposta:**
+
+    ```json
+    {
+        "message": "Alunos registrados com sucesso.",
+        "students": [
+            {
+                "id": "ff89acf7-d775-4459-9696-024676df13a1",
+                "full_name": "João Silva",
+                "graduation_term": "1"
+            },
+            {
+                "id": "0dc1aea8-0cdf-4647-8831-caa7c67c8819",
+                "full_name": "Maria Souza",
+                "graduation_term": "2"
+            },
+            {
+                "id": "9fb2a64c-d50f-4725-a474-2e4c0a5445f6",
+                "full_name": "Pedro Oliveira",
+                "graduation_term": "3"
+            }
+        ]
+    }
+    ```
+
+### 5. **Gerar Certificado ou Diploma**
+
+Essa rota permite gerar um certificado ou diploma para um aluno. O tipo de certificado pode ser um "highlight certificate" ou um "diploma". A requisição inclui informações do aluno e os nomes do diretor e vice-diretor (se necessário).
+
+- **Método:** `POST`
+- **Rota:** `/api/students/generate-certificate`
+- **Body da Requisição(certificado de destaque):**
+
+    ```json
+    {
+        "certificate_type": "highlight_certificate",
+        "student_id": "219cf842-35df-445a-ab50-d4f2de3a62e9",
+        "director": "Rafael",
+        "vice_director": "Gabriel"
+    }
+    ```
+
+- **Corpo da Requisição (diploma):**
+
+    ```json
+    {
+        "certificate_type": "highlight_certificate",
+        "student_id": "219cf842-35df-445a-ab50-d4f2de3a62e9",
+        "director": "Rafael",
+   
+    }
+    ```
+
+- **Resposta:**
+
+    ```http
+    HTTP/1.1 200 OK
+    Content-Type: application/pdf
+    Content-Disposition: attachment; filename="certificate.pdf"
+    ```
+
+O arquivo PDF será retornado diretamente no corpo da resposta. O cliente poderá então salvar o arquivo no seu sistema.
+
+- **Mensagens de Erro:**
+
+  1. **Aluno não encontrado (404):** Caso o student_id fornecido não corresponda a um aluno existente, a resposta será:
+
+      ```json
+      {
+          "error": "Student not found"
+      }
+      ```
+
+  2. **Tipo de certificado inválido (404):** Caso o certificate_type fornecido não seja válido (ou seja, não seja "highlight_certificate" ou "diploma"), a resposta será:
+
+      ```json
+      {
+          "error": "Invalid certificate type"
+      }
+      ```
+
+**Observações:**
+
+- Certificados "highlight_certificate" podem ser gerados para alunos que se destacaram.
+- Diplomas exigem apenas o nome do diretor, sem a necessidade de vice-diretor.
+- O sistema irá validar o student_id e garantir que o aluno existe na base de dados antes de gerar o certificado ou diploma.

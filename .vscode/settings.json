@@ -4,6 +4,7 @@
     "corsheaders",
     "createsuperuser",
     "Insonmia",
+    "m̀akefile",
     "ondina",
     "pagesizes",
     "pdfbase",
@@ -15,6 +16,7 @@
     "runserver",
     "simplejwt",
     "ttfonts",
-    "usuario"
+    "usuario",
+    "XVCJ"
   ]
 }
