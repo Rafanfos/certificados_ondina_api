@@ -1,13 +1,22 @@
 {
   "cSpell.words": [
+    "certificadosondinaapi",
     "corsheaders",
+    "createsuperuser",
+    "Insonmia",
+    "m̀akefile",
     "ondina",
     "pagesizes",
     "pdfbase",
     "pdfgen",
     "pdfmetrics",
+    "postgres",
     "postgresql",
+    "psql",
+    "runserver",
     "simplejwt",
-    "ttfonts"
+    "ttfonts",
+    "usuario",
+    "XVCJ"
   ]
 }

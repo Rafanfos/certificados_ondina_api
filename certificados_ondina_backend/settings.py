@@ -28,7 +28,7 @@ SECRET_KEY = str(os.getenv("SECRET_KEY"))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str(os.getenv("DEBUG"))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['15.229.83.150', 'localhost', '127.0.0.1', 'certificadosondinaapi.shop']
 
 
 # Application definition
@@ -71,7 +71,8 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://seu-dominio.com",
+    "https://certificados-ondina-app.vercel.app",
+
 ]
 
 CORS_ALLOW_CREDENTIALS = True
