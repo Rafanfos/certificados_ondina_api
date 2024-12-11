@@ -113,14 +113,15 @@ def generate_pdf(request):
         )
         pdfmetrics.registerFont(TTFont("GreatVibes", font_path))
 
-        font_size = 40
+        font_size = 36
         p.setFont("GreatVibes", font_size)
         max_width = 600
-        students_name_y = certificate_type == "highlight_certificate" and 370 or 240
+        students_name_y = certificate_type == "highlight_certificate" and 370 or 300
 
         text_width = stringWidth(full_name, "GreatVibes", font_size)
         if text_width > max_width:
             # Divida o texto em várias linhas
+            students_name_y = certificate_type == "highlight_certificate" and 310 or 240
             lines = split_text_into_lines(full_name, "GreatVibes", font_size, max_width)
             y_offset = students_name_y + (len(lines) - 1) * font_size
             for line in lines:
